@@ -10,11 +10,10 @@ const db = new Database('users.db');
 router.post('/login', (req, res) => {
   const { username, password } = req.body;
 
-  // VULNERABILITY: SQL injection via string concatenation
-  const query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
-
   try {
-    const user = db.prepare(query).get();
+    // VULNERABILITY: SQL injection via template literal directly in prepare()
+    const user = db.prepare(`SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`).get();
+
     if (user) {
       // VULNERABILITY: exposes full user object including password hash
       res.json({ success: true, user: user });
@@ -24,7 +23,7 @@ router.post('/login', (req, res) => {
     }
   } catch (err) {
     // VULNERABILITY: exposes internal error and stack trace
-    res.status(500).json({ error: err.message, stack: err.stack });
+    res.json({ error: err.message, stack: err.stack });
   }
 });
 

@@ -28,7 +28,8 @@ rules:
       cwe: "CWE-89"
 
   - id: js-exposed-stack-trace
-    pattern: res.json({ ..., stack: $ERR.stack, ... })
+    pattern: |
+      $RES.json({ ..., stack: $ERR.stack, ... })
     message: >
       Stack trace exposed in HTTP response.
       Log errors server-side only. Return generic message to client.
@@ -39,7 +40,8 @@ rules:
       owasp: "A05:2021 - Security Misconfiguration"
 
   - id: js-error-message-exposed
-    pattern: res.json({ ..., error: $ERR.message, ... })
+    pattern: |
+      $RES.json({ ..., error: $ERR.message, ... })
     message: >
       Raw error message exposed in HTTP response.
       Return a generic error string. Log the real error server-side.
