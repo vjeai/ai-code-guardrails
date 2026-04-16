@@ -2,3 +2,4 @@ node_modules/
 *.db
 .env
 obsidian-vault
+.claude/settings.local.json
