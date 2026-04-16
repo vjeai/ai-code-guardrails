@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "obsidian-vault": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/tusshar/Documents/brain"
+      ]
+    }
+  }
+}
