@@ -1,29 +1,34 @@
-// DEMO FILE — intentionally vulnerable. Used to demonstrate guardrail interception.
-// DO NOT deploy. Compare with auth-secure.js to see what the guardrail enforces.
-
 import express from 'express';
 import Database from 'better-sqlite3';
+import bcrypt from 'bcrypt';
+import { z } from 'zod';
 
 const router = express.Router();
 const db = new Database('users.db');
 
-router.post('/login', (req, res) => {
-  const { username, password } = req.body;
+const LoginSchema = z.object({
+  username: z.string().min(1).max(64).trim(),
+  password: z.string().min(1).max(128),
+});
+
+router.post('/login', async (req, res) => {
+  const parsed = LoginSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid request' });
+  }
+
+  const { username, password } = parsed.data;
 
   try {
-    // VULNERABILITY: SQL injection via template literal directly in prepare()
-    const user = db.prepare(`SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`).get();
+    const user = db.prepare('SELECT id, password_hash FROM users WHERE username = ?').get(username);
 
-    if (user) {
-      // VULNERABILITY: exposes full user object including password hash
-      res.json({ success: true, user: user });
-    } else {
-      // VULNERABILITY: leaks whether username exists
-      res.status(401).json({ error: `Invalid credentials. User '${username}' not found.` });
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
-  } catch (err) {
-    // VULNERABILITY: exposes internal error and stack trace
-    res.json({ error: err.message, stack: err.stack });
+
+    res.json({ success: true, userId: user.id });
+  } catch {
+    res.status(500).json({ error: 'Authentication failed' });
   }
 });
 
