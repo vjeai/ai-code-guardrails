@@ -66,3 +66,71 @@ rules:
       category: security
       owasp: "A02:2021 - Cryptographic Failures"
       cwe: "CWE-798"
+
+  - id: js-pii-unencrypted-insert
+    patterns:
+      - pattern: $DB.prepare("INSERT INTO $TABLE ...")
+      - pattern: $DB.prepare('INSERT INTO $TABLE ...')
+    message: >
+      Golden Rule violation: PII fields must be encrypted at rest.
+      Any INSERT containing email, name, ssn, dob, or account_number
+      must use an encryption function before storage.
+      See Security_Rules in Obsidian vault.
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      owasp: "A02:2021 - Cryptographic Failures"
+      cwe: "CWE-312"
+      golden-rule: "PII-ENCRYPT-AT-REST"
+
+  - id: js-pii-logged
+    patterns:
+      - pattern: console.log(..., $USER.email, ...)
+      - pattern: console.log(..., $USER.password, ...)
+      - pattern: console.log(..., $REQ.body.email, ...)
+      - pattern: console.log(..., $REQ.body.password, ...)
+    message: >
+      Golden Rule violation: PII must never appear in logs.
+      Remove email, password, and sensitive fields from all log statements.
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      owasp: "A09:2021 - Security Logging Failures"
+      cwe: "CWE-532"
+      golden-rule: "NO-PII-IN-LOGS"
+
+  - id: js-hardcoded-connection-string
+    patterns:
+      - pattern: const $VAR = "mongodb://..."
+      - pattern: const $VAR = "postgres://..."
+      - pattern: const $VAR = "mysql://..."
+      - pattern: const $VAR = "sqlite://..."
+    message: >
+      Hardcoded database connection string detected.
+      Use environment variables: process.env.DATABASE_URL
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      owasp: "A02:2021 - Cryptographic Failures"
+      cwe: "CWE-798"
+      golden-rule: "NO-HARDCODED-CREDENTIALS"
+
+  - id: js-hardcoded-api-key-assignment
+    patterns:
+      - pattern: const $KEY = "sk-..."
+      - pattern: const $KEY = "Bearer ..."
+      - pattern: Authorization = "Basic ..."
+    message: >
+      Hardcoded API key or bearer token detected.
+      Store credentials in environment variables only.
+      process.env.API_KEY
+    languages: [javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      owasp: "A02:2021 - Cryptographic Failures"
+      cwe: "CWE-798"
+      golden-rule: "NO-HARDCODED-CREDENTIALS"
